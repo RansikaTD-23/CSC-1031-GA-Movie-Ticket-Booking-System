@@ -8,9 +8,7 @@
 #include "booking.h"
 #include "display.h"
 
-/* ---------- Safe input helpers (never crash on bad input) ---------- */
 
-/* Reads an integer safely. Returns 1 on success, 0 on failure (and clears buffer). */
 static int readInt(int *out) {
     char line[64];
     if (!fgets(line, sizeof(line), stdin)) {
@@ -33,7 +31,7 @@ static int readInt(int *out) {
 static int promptInt(const char *prompt, int *out) {
     printf("%s", prompt);
     if (!readInt(out)) {
-        printf("Invalid input. Please enter numbers only.\n");
+        printf("\nInvalid input. Please Enter Numbers Only.\n");
         return 0;
     }
     return 1;
@@ -44,6 +42,15 @@ static void readLine(char *buffer, int size) {
         buffer[strcspn(buffer, "\n")] = '\0';
     } else {
         buffer[0] = '\0';
+    }
+}
+
+/* Waits for the user to press Enter before returning to the main menu */
+static void pauseForMenu(void) {
+    printf("\nPress Enter to Return to Main Menu");
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {
+        /* discard any leftover characters until newline */
     }
 }
 
@@ -72,10 +79,10 @@ static int parseSeatLabel(const char *label, int *row, int *col) {
 static int chooseShowtime(Movie movies[]) {
     printShowtimesList(movies);
     int showNum;
-    if (!promptInt("\nEnter show # (or 0 to cancel): ", &showNum)) return -1;
+    if (!promptInt("\nPlease Enter Show # (or 0 to cancel): \n", &showNum)) return -1;
     if (showNum == 0) return -1;
     if (showNum < 1 || showNum > NUM_SHOWS) {
-        printf("Invalid show number.\n");
+        printf("\nInvalid Show Number.\n");
         return -1;
     }
     return showNum - 1; /* 0-indexed */
@@ -88,7 +95,7 @@ static void handleViewShowtimes(Movie movies[]) {
 static void handleViewSeatMap(Movie movies[], Showtime shows[]) {
     int s = chooseShowtime(movies);
     if (s < 0) return;
-    printf("\nSeat map for %s (%s):\n", movies[s / SHOWTIMES_PER_MOVIE].title,
+    printf("\nSeat Map For %s (%s):\n", movies[s / SHOWTIMES_PER_MOVIE].title,
            movies[s / SHOWTIMES_PER_MOVIE].times[s % SHOWTIMES_PER_MOVIE]);
     printSeatMap(&shows[s]);
 }
@@ -100,30 +107,30 @@ static void handleBookSeat(Movie movies[], Showtime shows[]) {
     printSeatMap(&shows[s]);
 
     int numSeats;
-    if (!promptInt("\nHow many seats to book in this transaction? ", &numSeats)) return;
+    if (!promptInt("\nHow Many Seats to Book in This Transaction? ", &numSeats)) return;
     if (numSeats < 1 || numSeats > TOTAL_SEATS) {
-        printf("Invalid number of seats.\n");
+        printf("\nInvalid number of seats.\n");
         return;
     }
 
     char name[MAX_NAME_LEN];
-    printf("Enter customer name: ");
+    printf("\nPlease Enter Customer Name: ");
     readLine(name, MAX_NAME_LEN);
     if (name[0] == '\0') {
-        printf("Booking cancelled: name cannot be empty.\n");
+        printf("\nBooking Cancelled: Name Cannot be Empty.\n");
         return;
     }
 
     int isStudent = 0, isSenior = 0;
     int category;
-    printf("Discount category — 0: None  1: Student  2: Senior Citizen: ");
+    printf("\nDiscount Category \n0: None  \n1: Student  \n2: Senior Citizen\n\nPlease Enter Category: ");
     if (!readInt(&category)) category = 0;
     if (category == 1) isStudent = 1;
     else if (category == 2) isSenior = 1;
 
     int isGroup = (numSeats >= GROUP_MIN_SEATS) ? 1 : 0;
     if (isGroup) {
-        printf("Group discount (%d%% off) applies for booking %d+ seats.\n",
+        printf("\nGroup discount (%d%% off) applies for booking %d+ seats.\n",
                GROUP_DISCOUNT_PCT, GROUP_MIN_SEATS);
     }
 
@@ -132,28 +139,28 @@ static void handleBookSeat(Movie movies[], Showtime shows[]) {
 
     for (int i = 0; i < numSeats; i++) {
         char label[16];
-        printf("\nSeat %d of %d — enter seat (e.g. C7): ", i + 1, numSeats);
+        printf("\nSeat %d of %d Enter Seat (e.g. C7): ", i + 1, numSeats);
         readLine(label, sizeof(label));
 
         int row, col;
         if (!parseSeatLabel(label, &row, &col)) {
-            printf("  Invalid seat format. Skipping this seat.\n");
+            printf("\nInvalid Seat Format. Skipping This Seat.\n");
             continue;
         }
 
         double price;
         if (bookSeat(&shows[s], row, col, name, isStudent, isSenior, isGroup, &price)) {
-            printf("  Booked seat %c%d for %s. Price: Rs. %.2f\n",
+            printf("\nBooked Seat %c%d for %s. Price: Rs. %.2f\n",
                    'A' + row, col + 1, name, price);
             transactionTotal += price;
             booked++;
         } else {
-            printf("  Seat %c%d is already booked or out of range. Skipped.\n",
+            printf("\nSeat %c%d is Already Booked or Out of Range. Skipped.\n",
                    'A' + row, col + 1);
         }
     }
 
-    printf("\nTransaction summary: %d seat(s) booked, total Rs. %.2f\n",
+    printf("\nTransaction Summary: \n%d Seat Booked\ntotal Rs. %.2f\n",
            booked, transactionTotal);
 }
 
@@ -164,20 +171,20 @@ static void handleCancelBooking(Movie movies[], Showtime shows[]) {
     printSeatMap(&shows[s]);
 
     char label[16];
-    printf("\nEnter seat to cancel (e.g. C7): ");
+    printf("\nPlease Enter Seat to Cancel (e.g. C7): ");
     readLine(label, sizeof(label));
 
     int row, col;
     if (!parseSeatLabel(label, &row, &col)) {
-        printf("Invalid seat format.\n");
+        printf("\nInvalid Seat Format.\n");
         return;
     }
 
     if (cancelSeat(&shows[s], row, col)) {
-        printf("Booking for seat %c%d has been cancelled and the seat is now free.\n",
+        printf("\nBooking for Seat %c%d Has Been Cancelled and the Seat is Now Free.\n",
                'A' + row, col + 1);
     } else {
-        printf("That seat is not currently booked (nothing to cancel), or is out of range.\n");
+        printf("\nThat Seat is Not Currently Booked (nothing to cancel), or is Out of Range.\n");
     }
 }
 
@@ -186,7 +193,7 @@ static void handleSearchBooking(Movie movies[], Showtime shows[]) {
     if (s < 0) return;
 
     int mode;
-    printf("Search by — 1: Customer name  2: Seat number: ");
+    printf("\nSearch by \n\n1: Customer name  \n2: Seat number\n\nPlease Select Choice: ");
     if (!readInt(&mode)) {
         printf("Invalid input.\n");
         return;
@@ -194,24 +201,24 @@ static void handleSearchBooking(Movie movies[], Showtime shows[]) {
 
     if (mode == 1) {
         char name[MAX_NAME_LEN];
-        printf("Enter (part of) customer name: ");
+        printf("\nPlease Enter Customer Name: ");
         readLine(name, MAX_NAME_LEN);
         int found = searchByName(&shows[s], name);
-        if (found == 0) printf("No bookings found for \"%s\".\n", name);
+        if (found == 0) printf("No Bookings Found For \"%s\".\n", name);
     } else if (mode == 2) {
         char label[16];
-        printf("Enter seat number (e.g. C7): ");
+        printf("Please Enter Seat Number (e.g. C7): ");
         readLine(label, sizeof(label));
         int row, col;
         if (!parseSeatLabel(label, &row, &col)) {
-            printf("Invalid seat format.\n");
+            printf("Invalid Seat Format.\n");
             return;
         }
         if (!searchBySeat(&shows[s], row, col)) {
-            printf("Seat %c%d is not currently booked.\n", 'A' + row, col + 1);
+            printf("Seat %c%d is Not Currently Booked.\n", 'A' + row, col + 1);
         }
     } else {
-        printf("Invalid choice.\n");
+        printf("Invalid Choice.\n");
     }
 }
 
@@ -234,19 +241,19 @@ int main(void) {
         printMainMenu();
 
         if (!readInt(&choice)) {
-            printf("Invalid input. Please enter a number between 1 and 7.\n");
+            printf("Invalid input. Please Enter a Number Between 1 and 7.\n");
             continue;
         }
 
         switch (choice) {
-            case 1: handleViewShowtimes(movies); break;
-            case 2: handleViewSeatMap(movies, shows); break;
-            case 3: handleBookSeat(movies, shows); break;
-            case 4: handleCancelBooking(movies, shows); break;
-            case 5: handleSearchBooking(movies, shows); break;
-            case 6: printRevenueReport(movies, shows); break;
+            case 1: handleViewShowtimes(movies); pauseForMenu(); break;
+            case 2: handleViewSeatMap(movies, shows); pauseForMenu(); break;
+            case 3: handleBookSeat(movies, shows); pauseForMenu(); break;
+            case 4: handleCancelBooking(movies, shows); pauseForMenu(); break;
+            case 5: handleSearchBooking(movies, shows); pauseForMenu(); break;
+            case 6: printRevenueReport(movies, shows); pauseForMenu(); break;
             case 7:
-                printf("Thank you for using the Movie Ticket Booking System. Goodbye!\n");
+                printf("Thank You for Using the Movie Ticket Booking System. Goodbye!\n");
                 running = 0;
                 break;
             default:
