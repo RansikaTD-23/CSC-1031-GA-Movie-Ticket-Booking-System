@@ -79,15 +79,31 @@ static int containsIgnoreCase(const char *haystack, const char *needle) {
     return 0;
 }
 
+/* Prints the shared column header for search results. */
+static void printSearchResultHeader(void) {
+    printf("  %-6s | %-20s | %12s\n", "Seat", "Customer", "Price Paid");
+    printf("  ------ | -------------------- | ------------\n");
+}
+
+/* Prints one aligned search-result row. Seat label is built into a
+   fixed-width field first so 1-digit and 2-digit seat numbers (A1 vs
+   J10) still line up, and the price uses a fixed-width numeric field
+   so amounts of any size stay in their column. */
+static void printSearchResultRow(int row, int col, const char *name, double price) {
+    char seatLabel[8];
+    snprintf(seatLabel, sizeof(seatLabel), "%c%d", 'A' + row, col + 1);
+    printf("  %-6s | %-20s | Rs. %8.2f\n", seatLabel, name, price);
+}
+
 int searchByName(const Showtime *show, const char *name) {
     int found = 0;
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < SEATS_PER_ROW; c++) {
             if (show->seats[r][c].booked &&
                 containsIgnoreCase(show->seats[r][c].customerName, name)) {
-                printf("  Seat %c%d | Customer: %-20s | Price paid: Rs. %.2f\n",
-                       'A' + r, c + 1, show->seats[r][c].customerName,
-                       show->seats[r][c].pricePaid);
+                if (found == 0) printSearchResultHeader();
+                printSearchResultRow(r, c, show->seats[r][c].customerName,
+                                     show->seats[r][c].pricePaid);
                 found++;
             }
         }
@@ -99,8 +115,8 @@ int searchBySeat(const Showtime *show, int row, int col) {
     if (!isValidSeat(row, col)) return 0;
     if (!show->seats[row][col].booked) return 0;
 
-    printf("  Seat %c%d | Customer: %-20s | Price paid: Rs. %.2f\n",
-           'A' + row, col + 1, show->seats[row][col].customerName,
-           show->seats[row][col].pricePaid);
+    printSearchResultHeader();
+    printSearchResultRow(row, col, show->seats[row][col].customerName,
+                         show->seats[row][col].pricePaid);
     return 1;
 }
