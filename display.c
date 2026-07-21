@@ -46,14 +46,15 @@ void printSeatMap(const Showtime *show) {
         SeatTier tier = getSeatTier(r);
         printf("  <- %s (Rs. %.0f)\n", getTierLabel(tier), getBasePrice(tier));
     }
-    printf("\nLegend: '.' = free   'X' = booked\n");
+    printf("\nSymbols: '.' = free   'X' = booked\n");
 }
 void printRevenueReport(Movie movies[], Showtime shows[]) {
-    printf("\n===================================================================\n");
-    printf("                          REVENUE REPORT\n");
-    printf("===================================================================\n");
-    printf("%-20s %-10s %-15s %s\n", "Movie", "Showtime", "Tickets Sold", "Revenue");
-    printf("-------------------------------------------------------------------\n");
+    printf("\n==================================================================================\n");
+    printf("                                REVENUE REPORT\n");
+    printf("==================================================================================\n");
+    printf("+----------------------------------+------------+---------------+----------------+\n");
+    printf("| %-32s | %-10s | %13s | %14s |\n", "Movie", "Showtime", "Tickets Sold", "Revenue");
+    printf("+----------------------------------+------------+---------------+----------------+\n");
 
     double grandTotal = 0.0;
     int grandTickets = 0;
@@ -61,15 +62,19 @@ void printRevenueReport(Movie movies[], Showtime shows[]) {
     for (int m = 0; m < NUM_MOVIES; m++) {
         for (int t = 0; t < SHOWTIMES_PER_MOVIE; t++) {
             int s = m * SHOWTIMES_PER_MOVIE + t;
-            printf("%-20s %-10s %-15d Rs. %.2f\n",
+            char revenueStr[24];
+            snprintf(revenueStr, sizeof(revenueStr), "Rs. %.2f", shows[s].totalRevenue);
+            printf("| %-32s | %-10s | %13d | %14s |\n",
                    movies[m].title, movies[m].times[t],
-                   shows[s].ticketsSold, shows[s].totalRevenue);
+                   shows[s].ticketsSold, revenueStr);
             grandTotal += shows[s].totalRevenue;
             grandTickets += shows[s].ticketsSold;
         }
     }
 
-    printf("-------------------------------------------------------------------\n");
-    printf("%-20s %-10s %-15d Rs. %.2f\n", "TOTAL", "", grandTickets, grandTotal);
-    printf("===================================================================\n");
+    char grandTotalStr[24];
+    snprintf(grandTotalStr, sizeof(grandTotalStr), "Rs. %.2f", grandTotal);
+    printf("+----------------------------------+------------+---------------+----------------+\n");
+    printf("| %-32s | %-10s | %13d | %14s |\n", "TOTAL", "", grandTickets, grandTotalStr);
+    printf("+----------------------------------+------------+---------------+----------------+\n");
 }
