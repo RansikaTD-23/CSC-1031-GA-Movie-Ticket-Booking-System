@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "display.h"
 #include "pricing.h"
-
 void printMainMenu(void) {
     printf("\n==================================================\n");
     printf("        MOVIE TICKET BOOKING SYSTEM - MAIN MENU\n");
@@ -14,27 +13,30 @@ void printMainMenu(void) {
     printf("6. View Revenue Report\n");
     printf("7. Exit\n");
     printf("--------------------------------------------------\n");
-    printf("Enter your choice: ");
+    printf("Please Enter Your Choice: ");
 }
-
 void printShowtimesList(Movie movies[]) {
-    printf("\n--- Available Movies & Showtimes ---\n");
+    printf("\n===================================================================\n");
+    printf("                    AVAILABLE MOVIES & SHOWTIMES\n");
+    printf("===================================================================\n");
+    printf("+--------+----------------------------------+------------+\n");
+    printf("| %-6s | %-32s | %-10s |\n", "Show #", "Movie", "Showtime");
+    printf("+--------+----------------------------------+------------+\n");
     for (int m = 0; m < NUM_MOVIES; m++) {
-        printf("%d. %s\n", m + 1, movies[m].title);
         for (int t = 0; t < SHOWTIMES_PER_MOVIE; t++) {
             int showIndex = m * SHOWTIMES_PER_MOVIE + t + 1;
-            printf("     [Show #%d] %s\n", showIndex, movies[m].times[t]);
+            printf("| %-6d | %-32s | %-10s |\n",
+                   showIndex, movies[m].title, movies[m].times[t]);
         }
     }
+    printf("+--------+----------------------------------+------------+\n");
 }
-
 void printSeatMap(const Showtime *show) {
-    printf("\n     ");
+    printf("\n      ");
     for (int c = 0; c < SEATS_PER_ROW; c++) {
         printf("%2d ", c + 1);
     }
     printf("\n");
-
     for (int r = 0; r < ROWS; r++) {
         printf("Row %c ", 'A' + r);
         for (int c = 0; c < SEATS_PER_ROW; c++) {
@@ -44,26 +46,35 @@ void printSeatMap(const Showtime *show) {
         SeatTier tier = getSeatTier(r);
         printf("  <- %s (Rs. %.0f)\n", getTierLabel(tier), getBasePrice(tier));
     }
-    printf("\nLegend: '.' = free   'X' = booked\n");
+    printf("\nSymbols: '.' = free   'X' = booked\n");
 }
-
 void printRevenueReport(Movie movies[], Showtime shows[]) {
-    printf("\n================ REVENUE REPORT ================\n");
+    printf("\n==================================================================================\n");
+    printf("                                REVENUE REPORT\n");
+    printf("==================================================================================\n");
+    printf("+----------------------------------+------------+---------------+----------------+\n");
+    printf("| %-32s | %-10s | %13s | %14s |\n", "Movie", "Showtime", "Tickets Sold", "Revenue");
+    printf("+----------------------------------+------------+---------------+----------------+\n");
+
     double grandTotal = 0.0;
     int grandTickets = 0;
 
     for (int m = 0; m < NUM_MOVIES; m++) {
         for (int t = 0; t < SHOWTIMES_PER_MOVIE; t++) {
             int s = m * SHOWTIMES_PER_MOVIE + t;
-            printf("%-20s %-9s | Tickets sold: %2d | Revenue: Rs. %.2f\n",
+            char revenueStr[24];
+            snprintf(revenueStr, sizeof(revenueStr), "Rs. %.2f", shows[s].totalRevenue);
+            printf("| %-32s | %-10s | %13d | %14s |\n",
                    movies[m].title, movies[m].times[t],
-                   shows[s].ticketsSold, shows[s].totalRevenue);
+                   shows[s].ticketsSold, revenueStr);
             grandTotal += shows[s].totalRevenue;
             grandTickets += shows[s].ticketsSold;
         }
     }
-    printf("-------------------------------------------------\n");
-    printf("TOTAL tickets sold: %d\n", grandTickets);
-    printf("TOTAL revenue:      Rs. %.2f\n", grandTotal);
-    printf("=================================================\n");
+
+    char grandTotalStr[24];
+    snprintf(grandTotalStr, sizeof(grandTotalStr), "Rs. %.2f", grandTotal);
+    printf("+----------------------------------+------------+---------------+----------------+\n");
+    printf("| %-32s | %-10s | %13d | %14s |\n", "TOTAL", "", grandTickets, grandTotalStr);
+    printf("+----------------------------------+------------+---------------+----------------+\n");
 }
